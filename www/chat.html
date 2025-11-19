@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Chat Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Login Screen */
+        .login-screen {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .login-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .login-box::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .login-box::-webkit-scrollbar-thumb {
+            background: #ccc;
+        }
+        
+        .login-box::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+        
+        .login-box h2 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #999;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #555;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .success-message {
+            color: #333;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        /* Chat Interface */
+        .chat-interface {
+            display: none;
+            width: 100%;
+            flex-direction: row;
+        }
+        
+        .chat-interface.active {
+            display: flex;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #f5f5f5;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-info {
+            padding: 20px;
+            background: #333;
+            color: white;
+        }
+        
+        .user-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .user-info p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #666;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #333;
+            border-bottom: 2px solid #333;
+        }
+        
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .channel-list, .peer-list {
+            list-style: none;
+        }
+        
+        .channel-item, .peer-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .channel-item:hover, .peer-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .channel-item.active, .peer-item.active {
+            border-color: #333;
+            background: #f0f0f0;
+        }
+        
+        .channel-item h4, .peer-item h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .peer-item p {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .add-channel-form {
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .add-channel-form input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .chat-header h3 {
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .chat-header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message.sent {
+            align-items: flex-end;
+        }
+        
+        .message.received {
+            align-items: flex-start;
+        }
+        
+        .message-header {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .message-bubble {
+            max-width: 60%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+        
+        .message.sent .message-bubble {
+            background: #333;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.received .message-bubble {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            border-color: #999;
+        }
+        
+        .chat-input button {
+            padding: 12px 30px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .chat-input button:hover {
+            background: #555;
+        }
+        
+        .peer-controls {
+            padding: 15px;
+            background: #f5f5f5;
+            border-top: 1px solid #ddd;
+        }
+        
+        .peer-controls input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .peer-controls button {
+            width: 100%;
+            padding: 8px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        
+        .peer-controls button:hover {
+            background: #555;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            border: 1px solid #ddd;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div class="login-screen" id="loginScreen">
+            <div class="login-box">
+                <h2> Hybrid Chat App </h2>
+                
+                <!-- Step 1: Cookie Session Login (Task 1) -->
+                <div id="cookieLoginForm">
+                    <h3 style="margin-bottom: 20px; color: #333;">Step 1: Session Login</h3>
+                    <form id="sessionLoginForm">
+                    <div class="form-group">
+                            <label>Username (Task 1)</label>
+                            <input type="text" id="sessionUsername" value="admin" required>
+                    </div>
+                    <div class="form-group">
+                            <label>Password (Task 1)</label>
+                            <input type="password" id="sessionPassword" value="password" required>
+                    </div>
+                        <button type="submit" class="btn">Login (Cookie Session)</button>
+                        <div id="sessionLoginMessage"></div>
+                    </form>
+                </div>
+                
+                <!-- Step 2: Peer Registration (Task 2) - Only shown after cookie login -->
+                <div id="peerRegistrationForm" style="display: none; margin-top: 30px; padding-top: 30px; border-top: 1px solid #ddd;">
+                    <h3 style="margin-bottom: 20px; color: #333;">Step 2: Register Peer</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Enter your peer information to start chatting</p>
+                    <form id="peerForm">
+                    <div class="form-group">
+                            <label>Your Username (for P2P)</label>
+                            <input type="text" id="loginUsername" placeholder="e.g., alice, bob" required>
+                            <small>This is your peer identity, not the session login</small>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                        <label>Tracker Server IP</label>
+                                <input type="text" id="trackerIp" value="127.0.0.1" required>
+                    </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                        <label>Tracker Server Port</label>
+                                <input type="number" id="trackerPort" value="8001" required>
+                    </div>
+                        </div>
+                        
+                    <div class="form-group">
+                        <label>Your P2P Port</label>
+                        <input type="number" id="peerPort" value="9100" required>
+                            <small>Port for P2P TCP socket (must be unique per peer)</small>
+                    </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>WebPeer Service IP</label>
+                                <input type="text" id="webpeerIp" value="127.0.0.1" required>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>WebPeer Service Port</label>
+                                <input type="number" id="webpeerPort" value="8002" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Register Peer & Start Chat</button>
+                    <div id="loginMessage"></div>
+                </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="chat-interface" id="chatInterface">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="user-info">
+                    <h3 id="currentUsername">User</h3>
+                    <p id="peerAddress">P2P: 0.0.0.0:0</p>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('channels')">Channels</button>
+                    <button class="tab" onclick="switchTab('peers')">Peers</button>
+                </div>
+                
+                <div class="tab-content" id="channelsTab">
+                    <ul class="channel-list" id="channelList">
+                        <!-- Channels will be added here -->
+                    </ul>
+                    <div class="add-channel-form">
+                        <input type="text" id="newChannelName" placeholder="Enter channel name">
+                        <button class="btn" onclick="joinChannel()">Join Channel</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="peersTab">
+                    <ul class="peer-list" id="peerList">
+                        <!-- Peers will be added here -->
+                    </ul>
+                    <div class="peer-controls">
+                        <button onclick="refreshPeerList()">Refresh Peers</button>
+                        <p id="peerCount" style="font-size: 12px; color: #666; margin-top: 10px; text-align: center;">0 peers</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <h3 id="chatTitle">Select a channel or peer</h3>
+                    <p id="chatSubtitle">Start chatting!</p>
+                </div>
+                
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be added here -->
+                </div>
+                
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Type your message..." onkeypress="handleMessageKeyPress(event)">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentUser = {
+            username: '',
+            trackerIp: '',
+            trackerPort: 0,
+            peerPort: 0,
+            webpeerIp: '',
+            webpeerPort: 0,
+            token: ''
+        };
+        
+        let currentChannel = null;
+        let currentPeer = null;
+        let channels = [];
+        let peers = [];
+        let messages = {};  // {channel/peer: [messages]}
+        let messagePollInterval = null;  // For polling messages from peer
+        
+        // Check if cookie session exists on page load
+        function checkCookieSession() {
+            const cookies = document.cookie.split(';');
+            const hasAuthCookie = cookies.some(cookie => cookie.trim().startsWith('auth=true'));
+            
+            if (hasAuthCookie) {
+                // Cookie session exists - skip Step 1 and show Step 2
+                console.log('Cookie session found - skipping Step 1');
+                document.getElementById('cookieLoginForm').style.display = 'none';
+                document.getElementById('peerRegistrationForm').style.display = 'block';
+                document.getElementById('peerRegistrationForm').style.marginTop = '0';
+                document.getElementById('peerRegistrationForm').style.paddingTop = '0';
+                document.getElementById('peerRegistrationForm').style.borderTop = 'none';
+            } else {
+                // No cookie - show Step 1
+                console.log('No cookie session - showing Step 1');
+                document.getElementById('cookieLoginForm').style.display = 'block';
+                document.getElementById('peerRegistrationForm').style.display = 'none';
+            }
+        }
+        
+        // Check cookie on page load
+        window.addEventListener('DOMContentLoaded', checkCookieSession);
+        
+        // Step 1: Cookie Session Login (Task 1)
+        document.getElementById('sessionLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const sessionUsername = document.getElementById('sessionUsername').value;
+            const sessionPassword = document.getElementById('sessionPassword').value;
+            
+            try {
+                // Get tracker URL from current page origin (supports both localhost:8001 and localhost:8002)
+                const trackerUrl = window.location.origin.replace(/:\d+$/, ':8001') || 'http://127.0.0.1:8001';
+                
+                // Login with form data (Task 1 - Cookie session)
+                const response = await fetch(`${trackerUrl}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    credentials: 'include',  // Important for cookies
+                    body: `username=${encodeURIComponent(sessionUsername)}&password=${encodeURIComponent(sessionPassword)}`
+                });
+                
+                if (response.ok) {
+                    // Cookie session login successful - reload page to show Step 2
+                    window.location.reload();
+                } else {
+                    showMessage('sessionLoginMessage', 'Invalid username or password', 'error');
+                }
+            } catch (error) {
+                showMessage('sessionLoginMessage', 'Connection error: ' + error, 'error');
+            }
+        });
+        
+        // Step 2: Peer Registration (Task 2) - Only username needed
+        document.getElementById('peerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const trackerIp = document.getElementById('trackerIp').value;
+            const trackerPort = parseInt(document.getElementById('trackerPort').value);
+            const peerPort = parseInt(document.getElementById('peerPort').value);
+            const webpeerIp = document.getElementById('webpeerIp').value;
+            const webpeerPort = parseInt(document.getElementById('webpeerPort').value);
+            
+            if (!username) {
+                showMessage('loginMessage', 'Please enter your peer username', 'error');
+                return;
+            }
+            
+            try {
+                // Register peer with tracker (no password needed)
+                    currentUser = {
+                        username: username,
+                        trackerIp: trackerIp,
+                        trackerPort: trackerPort,
+                        peerPort: peerPort,
+                    webpeerIp: webpeerIp,
+                    webpeerPort: webpeerPort,
+                    token: ''  // Not needed for peer registration
+                    };
+                    
+                // Initialize peer through WebPeer service
+                await initWebPeer();
+                
+                // Register peer info with tracker
+                    await registerPeer();
+                    
+                    // Show chat interface
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('chatInterface').classList.add('active');
+                    
+                    document.getElementById('currentUsername').textContent = username;
+                document.getElementById('peerAddress').textContent = `P2P: 127.0.0.1:${peerPort}`;
+                    
+                showNotification('Peer registered! P2P enabled!');
+                    
+                    // Start periodic peer list refresh
+                    setInterval(refreshPeerList, 10000);
+                
+                // Start message polling
+                startMessagePolling();
+            } catch (error) {
+                showMessage('loginMessage', 'Error: ' + error.message, 'error');
+                console.error('Peer registration error:', error);
+            }
+        });
+        
+        // Initialize peer through WebPeer service
+        async function initWebPeer() {
+            try {
+                const response = await fetch(`http://${currentUser.webpeerIp}:${currentUser.webpeerPort}/init-peer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        peer_ip: '127.0.0.1',  // Use localhost for P2P
+                        peer_port: currentUser.peerPort,
+                        tracker_ip: currentUser.trackerIp,
+                        tracker_port: currentUser.trackerPort
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    console.log('Peer initialized via WebPeer service');
+                } else {
+                    console.error('Failed to initialize peer:', data.message);
+                }
+            } catch (error) {
+                console.error('Failed to initialize peer:', error);
+            }
+        }
+        
+        // Register peer with tracker
+        async function registerPeer() {
+            try {
+                const response = await fetch(`http://${currentUser.trackerIp}:${currentUser.trackerPort}/submit-info`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        ip: '127.0.0.1',  // Use actual IP for P2P connections
+                        port: currentUser.peerPort,
+                        channels: channels
+                    })
+                });
+                
+                console.log('Registered with tracker');
+            } catch (error) {
+                console.error('Failed to register:', error);
+            }
+        }
+        
+        // Join channel
+        async function joinChannel() {
+            const channelName = document.getElementById('newChannelName').value.trim();
+            
+            if (!channelName) {
+                return;
+            }
+            
+            try {
+                // Join channel via tracker
+                const response = await fetch(`http://${currentUser.trackerIp}:${currentUser.trackerPort}/add-list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        channel: channelName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Join channel via WebPeer (auto-connects to peers)
+                    const webpeerResponse = await fetch(`http://${currentUser.webpeerIp}:${currentUser.webpeerPort}/join-channel`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: currentUser.username,
+                            channel: channelName
+                        })
+                    });
+                    
+                    const webpeerData = await webpeerResponse.json();
+                    if (webpeerData.status === 'success') {
+                        console.log('Auto-connected to peers in channel via P2P');
+                    }
+                    
+                    if (!channels.includes(channelName)) {
+                        channels.push(channelName);
+                        messages[channelName] = [];
+                        updateChannelList();
+                    }
+                    
+                    document.getElementById('newChannelName').value = '';
+                    showNotification(`Joined channel: ${channelName} (P2P enabled)`);
+                    
+                    selectChannel(channelName);
+                }
+            } catch (error) {
+                console.error('Failed to join channel:', error);
+            }
+        }
+        
+        // Update channel list UI
+        function updateChannelList() {
+            const list = document.getElementById('channelList');
+            list.innerHTML = '';
+            
+            channels.forEach(channel => {
+                const li = document.createElement('li');
+                li.className = 'channel-item';
+                if (currentChannel === channel) {
+                    li.classList.add('active');
+                }
+                
+                li.innerHTML = `
+                    <h4>#${channel}</h4>
+                `;
+                
+                li.onclick = () => selectChannel(channel);
+                list.appendChild(li);
+            });
+        }
+        
+        // Select channel
+        function selectChannel(channel) {
+            currentChannel = channel;
+            currentPeer = null;
+            
+            document.getElementById('chatTitle').textContent = `#${channel}`;
+            document.getElementById('chatSubtitle').textContent = 'Channel chat';
+            
+            updateChannelList();
+            displayMessages(channel);
+        }
+        
+        // Refresh peer list
+        async function refreshPeerList() {
+            if (!currentUser.username || !currentUser.trackerIp || !currentUser.trackerPort) {
+                console.log('Cannot refresh peers: user not registered');
+                return;
+            }
+            
+            try {
+                console.log('Refreshing peer list...');
+                const response = await fetch(`http://${currentUser.trackerIp}:${currentUser.trackerPort}/get-list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to refresh peers: HTTP', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Filter out current user from peer list
+                    peers = data.peers.filter(p => p.username !== currentUser.username);
+                    console.log('Peer list refreshed:', peers.length, 'peers found');
+                    updatePeerList();
+                    
+                    // Update peer count display
+                    const peerCountEl = document.getElementById('peerCount');
+                    if (peerCountEl) {
+                        peerCountEl.textContent = peers.length + ' peer' + (peers.length !== 1 ? 's' : '');
+                    }
+                    
+                    // Also update channels if available
+                    if (data.channels) {
+                        channels = Object.keys(data.channels);
+                        updateChannelList();
+                    }
+                } else {
+                    console.error('Failed to refresh peers:', data.message || 'Unknown error');
+                    const peerCountEl = document.getElementById('peerCount');
+                    if (peerCountEl) {
+                        peerCountEl.textContent = 'Error loading peers';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to refresh peers:', error);
+            }
+        }
+        
+        // Update peer list UI
+        function updatePeerList() {
+            const list = document.getElementById('peerList');
+            list.innerHTML = '';
+            
+            if (peers.length === 0) {
+                const li = document.createElement('li');
+                li.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No peers available</p>';
+                list.appendChild(li);
+                return;
+            }
+            
+            peers.forEach(peer => {
+                const li = document.createElement('li');
+                li.className = 'peer-item';
+                if (currentPeer === peer.username) {
+                    li.classList.add('active');
+                }
+                
+                li.innerHTML = `
+                    <h4>${peer.username}</h4>
+                    <p>${peer.ip}:${peer.port}</p>
+                `;
+                
+                li.onclick = () => selectPeer(peer);
+                list.appendChild(li);
+            });
+        }
+        
+        // Select peer
+        async function selectPeer(peer) {
+            currentPeer = peer.username;
+            currentChannel = null;
+            
+            document.getElementById('chatTitle').textContent = peer.username;
+            document.getElementById('chatSubtitle').textContent = `${peer.ip}:${peer.port}`;
+            
+            if (!messages[peer.username]) {
+                messages[peer.username] = [];
+            }
+            
+            // Connect to peer via P2P through WebPeer service
+            try {
+                const response = await fetch(`http://${currentUser.webpeerIp}:${currentUser.webpeerPort}/connect-peer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser.username,
+                        peer_username: peer.username,
+                        peer_ip: peer.ip,
+                        peer_port: peer.port
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showNotification(`Connected to ${peer.username} via P2P`);
+                } else {
+                    console.log('Peer connection:', data.message);
+                }
+            } catch (error) {
+                console.error('Failed to connect to peer:', error);
+            }
+            
+            updatePeerList();
+            displayMessages(peer.username);
+        }
+        
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text) {
+                return;
+            }
+            
+            if (!currentChannel && !currentPeer) {
+                showNotification('Select a channel or peer first!');
+                return;
+            }
+            
+            const target = currentChannel || currentPeer;
+            
+            if (!messages[target]) {
+                messages[target] = [];
+            }
+            
+            // Add message to UI immediately
+            messages[target].push({
+                from: currentUser.username,
+                message: text,
+                time: new Date().toISOString(),
+                sent: true
+            });
+            
+            input.value = '';
+            displayMessages(target);
+            
+            // Send via P2P through WebPeer service
+            try {
+                if (currentPeer) {
+                    // Direct peer message
+                    const response = await fetch(`http://${currentUser.webpeerIp}:${currentUser.webpeerPort}/send-peer`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: currentUser.username,
+                            peer_username: currentPeer,
+                            message: text,
+                            channel: 'direct'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.status !== 'success') {
+                        console.error('Failed to send P2P message:', data.message);
+                        showNotification('Failed to send message');
+                    }
+                } else if (currentChannel) {
+                    // Broadcast to channel
+                    const response = await fetch(`http://${currentUser.webpeerIp}:${currentUser.webpeerPort}/broadcast-peer`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: currentUser.username,
+                            message: text,
+                            channel: currentChannel
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        console.log(`Broadcasted to ${data.sent_count} peers`);
+                    } else {
+                        console.error('Failed to broadcast:', data.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Error sending message');
+            }
+        }
+        
+        // Start polling for new messages
+        function startMessagePolling() {
+            if (messagePollInterval) {
+                clearInterval(messagePollInterval);
+            }
+            
+            messagePollInterval = setInterval(async () => {
+                if (!currentUser.username) return;
+                
+                try {
+                    const response = await fetch(`http://${currentUser.webpeerIp}:${currentUser.webpeerPort}/get-messages`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: currentUser.username,
+                            channel: currentChannel || null
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.status === 'success' && data.messages) {
+                        // Update messages from peer
+                        data.messages.forEach(msg => {
+                            // For peer-to-peer messages (channel === 'direct'), use the peer's username as target
+                            // For channel messages, use channel name as target
+                            let target;
+                            if (msg.channel === 'direct' || !msg.channel) {
+                                // Peer-to-peer message: target is the other peer's username
+                                // If message is from current user, target is the peer they're chatting with
+                                // If message is from another peer, target is that peer's username
+                                if (msg.from === currentUser.username) {
+                                    // Message sent by current user - need to find the recipient
+                                    // This is tricky - we need to know who the message was sent to
+                                    // For now, we'll use the peer username if we're currently chatting with a peer
+                                    target = currentPeer || msg.from;
+                                } else {
+                                    // Message from another peer - target is that peer's username
+                                    target = msg.from;
+                                }
+                            } else {
+                                // Channel message - use channel name as target
+                                target = msg.channel;
+                            }
+                            
+                            if (!target) {
+                                console.warn('Could not determine target for message:', msg);
+                                return;
+                            }
+                            
+                            if (!messages[target]) {
+                                messages[target] = [];
+                            }
+                            
+                            // Check if message already exists
+                            const exists = messages[target].some(m => 
+                                m.from === msg.from && 
+                                m.message === msg.message && 
+                                m.time === msg.time
+                            );
+                            
+                            if (!exists) {
+                                messages[target].push({
+                                    from: msg.from,
+                                    message: msg.message,
+                                    time: msg.time,
+                                    channel: msg.channel,
+                                    sent: msg.from === currentUser.username
+                                });
+                            }
+                        });
+                        
+                        // Refresh display if current target is active
+                        if (currentChannel || currentPeer) {
+                            displayMessages(currentChannel || currentPeer);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling messages:', error);
+                }
+            }, 2000);  // Poll every 2 seconds
+        }
+        
+        // Handle Enter key in message input
+        function handleMessageKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // Display messages
+        function displayMessages(target) {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            
+            const msgs = messages[target] || [];
+            
+            msgs.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = msg.sent || msg.from === currentUser.username ? 'message sent' : 'message received';
+                
+                const time = new Date(msg.time).toLocaleTimeString();
+                
+                div.innerHTML = `
+                    <div class="message-header">${msg.from} • ${time}</div>
+                    <div class="message-bubble">
+                        ${msg.message}
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Switch tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('channelsTab').classList.add('hidden');
+            document.getElementById('peersTab').classList.add('hidden');
+            
+            if (tab === 'channels') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('channelsTab').classList.remove('hidden');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('peersTab').classList.remove('hidden');
+                refreshPeerList();
+            }
+        }
+        
+        // Show message
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = type === 'error' ? 'error-message' : 'success-message';
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+
