@@ -113,10 +113,12 @@ class HttpAdapter:
                 
             # --------------------------- Task 1 ---------------------------
 
-            # ----- Task 1A: /login (bypass cookie guard) ----
+            # ----- Task 1A: /login and /logout (bypass cookie guard) ----
             if len(routes) <= 0:
                 if req.method == "POST" and req.path == "/login":
                     return self.send(resp, self.handle_login(req, resp))
+                if req.method == "POST" and req.path == "/logout":
+                    return self.send(resp, self.handle_logout(req, resp))
 
             # ----- Task 1B: Cookie guard for "/" and "/index.html" -----
             early = self.cookie_auth_guard(req)
@@ -245,6 +247,26 @@ class HttpAdapter:
         # Wrong credentials -> 401 from catalog
         e = RESP_TEMPLATES["login_failed"]
         return (e["status"], {"Content-Type": e["content_type"], **e["headers"]}, e["body"])
+
+    def handle_logout(self, req, resp):
+        """
+        POST /logout: Clear the auth cookie by setting it to expire immediately.
+        """
+        print("[HttpAdapter] Logout request received")
+        
+        # Clear cookie by setting it with Max-Age=0 or Expires in the past
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Set-Cookie": "auth=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true",
+        }
+        
+        import json
+        body = json.dumps({"status": "success", "message": "Logged out successfully"}).encode("utf-8")
+        
+        print("[HttpAdapter] Logout successful, cookie cleared")
+        return ("200 OK", headers, body)
 
     def cookie_auth_guard(self, req):
         """

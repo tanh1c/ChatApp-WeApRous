@@ -276,8 +276,7 @@ class PeerClient:
             
             print("[Peer] Broadcast from {}: {}".format(
                 msg_data["from"], msg_data["message"]))
-    
-    
+          
     def connect_peer(self, peer_username, peer_ip, peer_port):
         """
         Establish P2P connection to another peer.

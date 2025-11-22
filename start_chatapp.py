@@ -466,6 +466,79 @@ def add_list(headers="guest", body="anonymous"):
         return json.dumps({"status": "error", "message": str(e)})
 
 
+@app.route('/remove-list', methods=['OPTIONS'])
+def remove_list_options(headers="guest", body="anonymous"):
+    """Handle OPTIONS preflight request for CORS."""
+    return ("200 OK", {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "86400"
+    }, "")
+
+@app.route('/remove-list', methods=['POST'])
+def remove_list(headers="guest", body="anonymous"):
+    """
+    Handle channel unsubscription (leave channel).
+    
+    Expected body format: {"username": str, "channel": str}
+    Response: {"status": "success"/"failed", "message": str}
+    
+    :param headers (str): The request headers
+    :param body (str): The request body containing channel information
+    :return: JSON response with channel status
+    """
+    print("[ChatApp] Remove from channel request received")
+    
+    try:
+        # Parse JSON body
+        data = json.loads(body) if body and body != "anonymous" else {}
+        username = data.get("username", "")
+        channel = data.get("channel", "")
+        
+        print("[ChatApp] Removing user {} from channel {}".format(username, channel))
+        
+        if not username or not channel:
+            return json.dumps({"status": "failed", "message": "Missing username or channel"})
+        
+        # Thread-safe channel update
+        with channels_lock:
+            if channel in channels_list:
+                if username in channels_list[channel]:
+                    channels_list[channel].remove(username)
+                    message = "User removed from channel successfully"
+                    
+                    # Remove channel if empty
+                    if len(channels_list[channel]) == 0:
+                        del channels_list[channel]
+                        print("[ChatApp] Channel '{}' deleted (no members)".format(channel))
+                else:
+                    message = "User not in channel"
+            else:
+                message = "Channel does not exist"
+        
+        # Update peer's channel list
+        with peers_lock:
+            for peer in peers_list:
+                if peer["username"] == username:
+                    if channel in peer["channels"]:
+                        peer["channels"].remove(channel)
+                    break
+        
+        response = {
+            "status": "success",
+            "message": message,
+            "channel": channel
+        }
+        
+        print("[ChatApp] User {} removed from channel '{}'".format(username, channel))
+        return json.dumps(response)
+    
+    except Exception as e:
+        print("[ChatApp] Error in remove-list: {}".format(e))
+        return json.dumps({"status": "error", "message": str(e)})
+
+
 @app.route('/get-list', methods=['GET', 'POST'])
 def get_list(headers="guest", body="anonymous"):
     """
